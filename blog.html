@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ブログ</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 16px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 2rem;
+        }
+
+        .blog-post {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 24px 32px;
+            margin-bottom: 24px;
+        }
+
+        .blog-post h2 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .blog-post .date {
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 12px;
+        }
+
+        .blog-post p {
+            font-size: 1rem;
+            color: #555;
+        }
+
+        nav {
+            text-align: center;
+            margin-top: 32px;
+        }
+
+        nav a {
+            font-size: 1.1rem;
+            color: #0066cc;
+            text-decoration: none;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 20px auto;
+            }
+
+            .blog-post {
+                padding: 16px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ブログ</h1>
+
+        <article class="blog-post">
+            <h2>テスト自動化を始めました</h2>
+            <div class="date">2026-04-14</div>
+            <p>Playwrightを使ったE2Eテストの自動化に取り組んでいます。ブラウザ操作を自動化することで、手動テストの負担を大幅に減らすことができます。</p>
+        </article>
+
+        <article class="blog-post">
+            <h2>プロジェクトの構成について</h2>
+            <div class="date">2026-04-10</div>
+            <p>automation-testプロジェクトでは、シンプルなHTMLページを使ってテスト自動化の学習を進めています。ページごとに異なるUI要素を配置し、さまざまなテストシナリオを試しています。</p>
+        </article>
+
+        <article class="blog-post">
+            <h2>はじめての投稿</h2>
+            <div class="date">2026-04-05</div>
+            <p>ブログページを開設しました。このブログでは、テスト自動化やWeb開発に関する学びを記録していきます。</p>
+        </article>
+
+        <nav>
+            <a href="index.html">&larr; ホームに戻る</a>
+        </nav>
+    </div>
+</body>
+</html>
