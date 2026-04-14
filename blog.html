@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+            background-color: #f5f5f5;
+        }
+        .container {
+            text-align: center;
+            max-width: 800px;
+            padding: 2rem;
+        }
+        h1 {
+            font-size: 3rem;
+            color: #333;
+        }
+        .blog-list {
+            list-style: none;
+            padding: 0;
+            margin: 2rem 0;
+        }
+        .blog-list li {
+            background: #fff;
+            margin-bottom: 1rem;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+        .blog-list h2 {
+            font-size: 1.5rem;
+            color: #333;
+            margin: 0 0 0.5rem;
+        }
+        .blog-list p {
+            font-size: 1rem;
+            color: #666;
+            margin: 0;
+        }
+        .blog-list .date {
+            font-size: 0.85rem;
+            color: #999;
+            margin-bottom: 0.5rem;
+        }
+        nav {
+            margin-top: 2rem;
+        }
+        nav a {
+            font-size: 1.2rem;
+            color: #0066cc;
+            text-decoration: none;
+            margin: 0 1rem;
+        }
+        nav a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Blog</h1>
+        <ul class="blog-list">
+            <li>
+                <p class="date">2026-04-14</p>
+                <h2>テスト自動化を始めました</h2>
+                <p>Playwrightを使ったE2Eテストの環境を構築しました。これからテストケースを充実させていきます。</p>
+            </li>
+            <li>
+                <p class="date">2026-04-10</p>
+                <h2>プロジェクト開始</h2>
+                <p>automation-testプロジェクトを立ち上げました。まずはシンプルなHTMLページから始めます。</p>
+            </li>
+        </ul>
+        <nav>
+            <a href="index.html">&larr; ホームに戻る</a>
+        </nav>
+    </div>
+</body>
+</html>
