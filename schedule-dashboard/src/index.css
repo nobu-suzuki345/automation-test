@@ -312,6 +312,79 @@ body {
   margin-bottom: 6px;
 }
 
+/* ---- Weather ---- */
+.weather-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.weather-city {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.weather-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.weather-icon {
+  font-size: 2.6rem;
+  line-height: 1;
+}
+
+.weather-temp {
+  font-size: 2.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.weather-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Pomodoro ---- */
+.pomo-mode {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.pomo-mode.work {
+  color: var(--accent);
+}
+
+.pomo-mode.break {
+  color: var(--meet);
+}
+
+.pomo-time {
+  font-size: 2.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.pomo-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* ---- Upcoming ---- */
+.up-when {
+  min-width: 64px;
+}
+
+.up-date {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
 /* ---- Events list ---- */
 .events-list {
   list-style: none;
