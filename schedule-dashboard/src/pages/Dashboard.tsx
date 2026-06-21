@@ -13,6 +13,7 @@ export default function Dashboard() {
     hidden: [],
   });
   const [editing, setEditing] = useState(false);
+  const [dragId, setDragId] = useState<string | null>(null);
 
   // 保存済みの順序を尊重しつつ、未知/新規カードは末尾に補完する
   const orderedIds = useMemo(() => {
@@ -43,6 +44,18 @@ export default function Dashboard() {
     setLayout((l) => ({ ...l, order: ids }));
   };
 
+  // ドラッグした dragId を targetId の位置へ移動する
+  const reorder = (targetId: string) => {
+    if (!dragId || dragId === targetId) return;
+    const ids = [...orderedIds];
+    const from = ids.indexOf(dragId);
+    const to = ids.indexOf(targetId);
+    if (from < 0 || to < 0) return;
+    const [moved] = ids.splice(from, 1);
+    ids.splice(to, 0, moved);
+    setLayout((l) => ({ ...l, order: ids }));
+  };
+
   return (
     <>
       <div className="page-toolbar">
@@ -63,8 +76,21 @@ export default function Dashboard() {
               if (!def) return null;
               const hidden = layout.hidden.includes(id);
               return (
-                <li key={id} className="customize-row">
+                <li
+                  key={id}
+                  className="customize-row"
+                  draggable
+                  onDragStart={() => setDragId(id)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => {
+                    reorder(id);
+                    setDragId(null);
+                  }}
+                >
                   <label>
+                    <span className="drag-handle" aria-hidden>
+                      ⠿
+                    </span>
                     <input
                       type="checkbox"
                       checked={!hidden}

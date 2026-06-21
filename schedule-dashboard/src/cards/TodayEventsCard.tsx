@@ -1,7 +1,7 @@
 import { useEvents } from "../context/EventsContext";
 import { useGoogle } from "../context/GoogleContext";
 import { formatTime } from "../lib/datetime";
-import { colorHex } from "../lib/eventColors";
+import { eventColorOf } from "../lib/eventColors";
 import JoinButtons from "../components/JoinButtons";
 
 export default function TodayEventsCard() {
@@ -40,7 +40,7 @@ export default function TodayEventsCard() {
             <li key={ev.id} className="event-row">
               <span
                 className="event-color"
-                style={{ background: colorHex(ev.colorId) }}
+                style={{ background: eventColorOf(ev.colorId, ev.calendarColor) }}
               />
               <div className="event-time">
                 {ev.allDay ? "終日" : formatTime(ev.start)}

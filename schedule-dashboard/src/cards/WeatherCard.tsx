@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useLocalStorage } from "../hooks/useLocalStorage";
+import { WEEKDAYS_JA } from "../lib/datetime";
 import {
   fetchWeather,
   geocode,
@@ -109,17 +110,33 @@ export default function WeatherCard() {
       ) : error ? (
         <p className="error small">{error}</p>
       ) : weather && info ? (
-        <div className="weather-main">
-          <div className="weather-icon">{info.icon}</div>
-          <div className="weather-temp">{Math.round(weather.temp)}°</div>
-          <div className="weather-meta">
-            <div>{info.label}</div>
-            <div className="muted small">
-              {loc.name}・最高 {Math.round(weather.max)}° / 最低{" "}
-              {Math.round(weather.min)}°
+        <>
+          <div className="weather-main">
+            <div className="weather-icon">{info.icon}</div>
+            <div className="weather-temp">{Math.round(weather.temp)}°</div>
+            <div className="weather-meta">
+              <div>{info.label}</div>
+              <div className="muted small">
+                {loc.name}・最高 {Math.round(weather.max)}° / 最低{" "}
+                {Math.round(weather.min)}°
+              </div>
             </div>
           </div>
-        </div>
+          <div className="weather-week">
+            {weather.daily.slice(0, 7).map((d) => (
+              <div key={d.date.toISOString()} className="weather-day">
+                <div className="weather-day-name">
+                  {WEEKDAYS_JA[d.date.getDay()]}
+                </div>
+                <div className="weather-day-icon">{weatherInfo(d.code).icon}</div>
+                <div className="weather-day-temp">
+                  <span>{Math.round(d.max)}°</span>
+                  <span className="muted">{Math.round(d.min)}°</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       ) : null}
     </section>
   );

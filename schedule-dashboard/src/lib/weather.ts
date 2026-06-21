@@ -2,12 +2,20 @@
 // - 現在地はブラウザの Geolocation、または都市名のジオコーディングで座標を得る
 // - 取得した座標から現在の天気と当日の最高/最低気温を取得する
 
+export interface DailyForecast {
+  date: Date;
+  code: number;
+  max: number;
+  min: number;
+}
+
 export interface Weather {
   temp: number;
   code: number;
   windSpeed: number;
   max: number;
   min: number;
+  daily: DailyForecast[];
 }
 
 export interface GeoPlace {
@@ -61,16 +69,25 @@ export async function fetchWeather(lat: number, lon: number): Promise<Weather> {
   const url =
     `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
     `&current=temperature_2m,weather_code,wind_speed_10m` +
-    `&daily=temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=1`;
+    `&daily=weather_code,temperature_2m_max,temperature_2m_min` +
+    `&timezone=auto&forecast_days=7`;
   const res = await fetch(url);
   if (!res.ok) throw new Error("天気の取得に失敗しました");
   const d = await res.json();
+  const times: string[] = d.daily.time ?? [];
+  const daily: DailyForecast[] = times.map((t, i) => ({
+    date: new Date(`${t}T00:00:00`),
+    code: d.daily.weather_code[i],
+    max: d.daily.temperature_2m_max[i],
+    min: d.daily.temperature_2m_min[i],
+  }));
   return {
     temp: d.current.temperature_2m,
     code: d.current.weather_code,
     windSpeed: d.current.wind_speed_10m,
     max: d.daily.temperature_2m_max[0],
     min: d.daily.temperature_2m_min[0],
+    daily,
   };
 }
 

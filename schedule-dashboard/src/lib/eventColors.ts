@@ -27,3 +27,10 @@ export function colorHex(colorId?: string): string {
   if (!colorId) return DEFAULT_HEX;
   return EVENT_COLORS.find((c) => c.id === colorId)?.hex ?? DEFAULT_HEX;
 }
+
+// 予定の表示色: イベント個別の colorId を優先し、なければ
+// 所属カレンダーの色、どちらも無ければ既定色を返す。
+export function eventColorOf(colorId?: string, calendarColor?: string): string {
+  if (colorId) return colorHex(colorId);
+  return calendarColor || DEFAULT_HEX;
+}

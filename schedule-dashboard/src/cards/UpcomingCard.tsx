@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useGoogle } from "../context/GoogleContext";
-import { listEvents, type CalendarEvent } from "../lib/google";
+import { useCalendars } from "../context/CalendarsContext";
+import { listEventsForCalendars, type CalendarEvent } from "../lib/google";
 import { formatTime, WEEKDAYS_JA } from "../lib/datetime";
-import { colorHex } from "../lib/eventColors";
+import { eventColorOf } from "../lib/eventColors";
 import JoinButtons from "../components/JoinButtons";
 
 const RANGE_DAYS = 7;
@@ -10,6 +11,7 @@ const MAX_ITEMS = 6;
 
 export default function UpcomingCard() {
   const { ready, signedIn, signIn } = useGoogle();
+  const { selectedCalendars } = useCalendars();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +28,7 @@ export default function UpcomingCard() {
 
     setLoading(true);
     setError(null);
-    listEvents(now, max)
+    listEventsForCalendars(now, max, selectedCalendars)
       .then((evts) =>
         setEvents(
           evts.filter((e) => e.start.getTime() > now.getTime()).slice(0, MAX_ITEMS)
@@ -36,7 +38,7 @@ export default function UpcomingCard() {
         setError(e instanceof Error ? e.message : "取得に失敗しました")
       )
       .finally(() => setLoading(false));
-  }, [signedIn]);
+  }, [signedIn, selectedCalendars]);
 
   useEffect(() => {
     load();
@@ -74,7 +76,7 @@ export default function UpcomingCard() {
             <li key={ev.id} className="event-row">
               <span
                 className="event-color"
-                style={{ background: colorHex(ev.colorId) }}
+                style={{ background: eventColorOf(ev.colorId, ev.calendarColor) }}
               />
               <div className="up-when">
                 <div className="up-date">

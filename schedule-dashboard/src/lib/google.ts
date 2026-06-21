@@ -30,6 +30,16 @@ export interface CalendarEvent {
   zoomLink?: string;
   htmlLink?: string;
   colorId?: string;
+  calendarId?: string;
+  calendarColor?: string;
+}
+
+export interface CalendarInfo {
+  id: string;
+  summary: string;
+  backgroundColor?: string;
+  primary: boolean;
+  accessRole?: string;
 }
 
 interface StoredToken {
@@ -162,7 +172,11 @@ function extractMeetFromConference(item: any): string | null {
   return entry?.uri ?? null;
 }
 
-function mapEvent(item: any): CalendarEvent {
+function mapEvent(
+  item: any,
+  calendarId?: string,
+  calendarColor?: string
+): CalendarEvent {
   const allDay = Boolean(item.start?.date);
   const start = new Date(item.start?.dateTime ?? item.start?.date);
   const end = new Date(item.end?.dateTime ?? item.end?.date);
@@ -186,15 +200,31 @@ function mapEvent(item: any): CalendarEvent {
     zoomLink: zoomLink ?? undefined,
     htmlLink: item.htmlLink,
     colorId: item.colorId,
+    calendarId,
+    calendarColor,
   };
+}
+
+export async function listCalendars(): Promise<CalendarInfo[]> {
+  const resp = await gapi.client.calendar.calendarList.list();
+  const items: any[] = resp.result.items ?? [];
+  return items.map((c) => ({
+    id: c.id,
+    summary: c.summaryOverride || c.summary,
+    backgroundColor: c.backgroundColor,
+    primary: Boolean(c.primary),
+    accessRole: c.accessRole,
+  }));
 }
 
 export async function listEvents(
   timeMin: Date,
-  timeMax: Date
+  timeMax: Date,
+  calendarId = "primary",
+  calendarColor?: string
 ): Promise<CalendarEvent[]> {
   const resp = await gapi.client.calendar.events.list({
-    calendarId: "primary",
+    calendarId,
     timeMin: timeMin.toISOString(),
     timeMax: timeMax.toISOString(),
     singleEvents: true,
@@ -202,15 +232,22 @@ export async function listEvents(
     maxResults: 100,
   });
   const items: any[] = resp.result.items ?? [];
-  return items.map(mapEvent);
+  return items.map((i) => mapEvent(i, calendarId, calendarColor));
 }
 
-export async function listTodayEvents(): Promise<CalendarEvent[]> {
-  const start = new Date();
-  start.setHours(0, 0, 0, 0);
-  const end = new Date();
-  end.setHours(23, 59, 59, 999);
-  return listEvents(start, end);
+/** 複数カレンダーの予定をまとめて取得し、開始時刻順に統合する。 */
+export async function listEventsForCalendars(
+  timeMin: Date,
+  timeMax: Date,
+  calendars: CalendarInfo[]
+): Promise<CalendarEvent[]> {
+  if (calendars.length === 0) return [];
+  const results = await Promise.all(
+    calendars.map((c) =>
+      listEvents(timeMin, timeMax, c.id, c.backgroundColor).catch(() => [])
+    )
+  );
+  return results.flat().sort((a, b) => a.start.getTime() - b.start.getTime());
 }
 
 export interface CreateEventInput {
@@ -220,11 +257,13 @@ export interface CreateEventInput {
   description?: string;
   addMeet?: boolean;
   colorId?: string;
+  calendarId?: string;
 }
 
 export async function createEvent(
   input: CreateEventInput
 ): Promise<CalendarEvent> {
+  const calendarId = input.calendarId || "primary";
   const resource: any = {
     summary: input.summary,
     description: input.description || undefined,
@@ -241,11 +280,11 @@ export async function createEvent(
     };
   }
   const resp = await gapi.client.calendar.events.insert({
-    calendarId: "primary",
+    calendarId,
     conferenceDataVersion: input.addMeet ? 1 : 0,
     resource,
   });
-  return mapEvent(resp.result);
+  return mapEvent(resp.result, calendarId);
 }
 
 export interface UpdateEventInput {
@@ -255,13 +294,15 @@ export interface UpdateEventInput {
   end: Date;
   description?: string;
   colorId?: string;
+  calendarId?: string;
 }
 
 export async function updateEvent(
   input: UpdateEventInput
 ): Promise<CalendarEvent> {
+  const calendarId = input.calendarId || "primary";
   const resp = await gapi.client.calendar.events.patch({
-    calendarId: "primary",
+    calendarId,
     eventId: input.id,
     resource: {
       summary: input.summary,
@@ -271,12 +312,15 @@ export async function updateEvent(
       end: { dateTime: input.end.toISOString() },
     },
   });
-  return mapEvent(resp.result);
+  return mapEvent(resp.result, calendarId);
 }
 
-export async function deleteEvent(eventId: string): Promise<void> {
+export async function deleteEvent(
+  eventId: string,
+  calendarId = "primary"
+): Promise<void> {
   await gapi.client.calendar.events.delete({
-    calendarId: "primary",
+    calendarId,
     eventId,
   });
 }

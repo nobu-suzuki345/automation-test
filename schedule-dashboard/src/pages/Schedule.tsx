@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useGoogle } from "../context/GoogleContext";
+import { useCalendars } from "../context/CalendarsContext";
 import {
   createEvent,
   deleteEvent,
-  listEvents,
+  listEventsForCalendars,
   updateEvent,
   type CalendarEvent,
 } from "../lib/google";
 import { formatTime, isSameDay, toTimeInput, WEEKDAYS_JA } from "../lib/datetime";
-import { colorHex, EVENT_COLORS } from "../lib/eventColors";
+import { colorHex, eventColorOf, EVENT_COLORS } from "../lib/eventColors";
 import JoinButtons from "../components/JoinButtons";
 
 type View = "month" | "week";
@@ -43,7 +44,10 @@ function buildWeekDays(day: Date): Date[] {
 
 export default function Schedule() {
   const { ready, signedIn, signIn } = useGoogle();
+  const { calendars, selectedIds, selectedCalendars, writableCalendars, toggle } =
+    useCalendars();
   const [view, setView] = useState<View>("month");
+  const [showCalendars, setShowCalendars] = useState(false);
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [selected, setSelected] = useState(() => new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -52,15 +56,18 @@ export default function Schedule() {
 
   // 追加 / 編集フォーム（editingId が null なら新規追加）
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingCalId, setEditingCalId] = useState<string | undefined>(undefined);
   const [summary, setSummary] = useState("");
   const [startTime, setStartTime] = useState("10:00");
   const [endTime, setEndTime] = useState("11:00");
   const [addMeet, setAddMeet] = useState(false);
   const [colorId, setColorId] = useState("");
+  const [targetCalId, setTargetCalId] = useState("");
   const [saving, setSaving] = useState(false);
 
   const resetForm = () => {
     setEditingId(null);
+    setEditingCalId(undefined);
     setSummary("");
     setStartTime("10:00");
     setEndTime("11:00");
@@ -70,6 +77,7 @@ export default function Schedule() {
 
   const startEdit = (ev: CalendarEvent) => {
     setEditingId(ev.id);
+    setEditingCalId(ev.calendarId);
     setSummary(ev.summary);
     setStartTime(toTimeInput(ev.start));
     setEndTime(toTimeInput(ev.end));
@@ -94,13 +102,13 @@ export default function Schedule() {
 
     setLoading(true);
     setError(null);
-    listEvents(timeMin, timeMax)
+    listEventsForCalendars(timeMin, timeMax, selectedCalendars)
       .then(setEvents)
       .catch((e: unknown) =>
         setError(e instanceof Error ? e.message : "予定の取得に失敗しました")
       )
       .finally(() => setLoading(false));
-  }, [month, signedIn]);
+  }, [month, signedIn, selectedCalendars]);
 
   useEffect(() => {
     loadMonth();
@@ -160,6 +168,7 @@ export default function Schedule() {
           start,
           end,
           colorId,
+          calendarId: editingCalId,
         });
       } else {
         await createEvent({
@@ -168,6 +177,7 @@ export default function Schedule() {
           end,
           addMeet,
           colorId,
+          calendarId: targetCalId || undefined,
         });
       }
       resetForm();
@@ -182,11 +192,11 @@ export default function Schedule() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (ev: CalendarEvent) => {
     if (!confirm("この予定を削除しますか？")) return;
     setError(null);
     try {
-      await deleteEvent(id);
+      await deleteEvent(ev.id, ev.calendarId);
       loadMonth();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "予定の削除に失敗しました");
@@ -240,7 +250,36 @@ export default function Schedule() {
               週
             </button>
           </div>
+          {calendars.length > 0 && (
+            <button
+              className="icon-btn"
+              aria-label="カレンダーを選択"
+              title="表示するカレンダー"
+              onClick={() => setShowCalendars((v) => !v)}
+            >
+              📚
+            </button>
+          )}
         </div>
+
+        {showCalendars && (
+          <div className="calendar-filter">
+            {calendars.map((c) => (
+              <label key={c.id} className="calendar-filter-row">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(c.id)}
+                  onChange={() => toggle(c.id)}
+                />
+                <span
+                  className="cal-dot"
+                  style={{ background: c.backgroundColor || "#2f6fed" }}
+                />
+                <span>{c.summary}</span>
+              </label>
+            ))}
+          </div>
+        )}
 
         {view === "month" ? (
           <>
@@ -336,7 +375,7 @@ export default function Schedule() {
             <li key={ev.id} className="event-row">
               <span
                 className="event-color"
-                style={{ background: colorHex(ev.colorId) }}
+                style={{ background: eventColorOf(ev.colorId, ev.calendarColor) }}
               />
               <div className="event-time">
                 {ev.allDay ? "終日" : formatTime(ev.start)}
@@ -355,7 +394,7 @@ export default function Schedule() {
               <button
                 className="icon-btn"
                 aria-label="削除"
-                onClick={() => handleDelete(ev.id)}
+                onClick={() => handleDelete(ev)}
               >
                 ✕
               </button>
@@ -373,6 +412,23 @@ export default function Schedule() {
             value={summary}
             onChange={(e) => setSummary(e.target.value)}
           />
+          {!editingId && writableCalendars.length > 1 && (
+            <select
+              className="text-input"
+              value={targetCalId}
+              onChange={(e) => setTargetCalId(e.target.value)}
+              title="追加先カレンダー"
+            >
+              <option value="">主カレンダー</option>
+              {writableCalendars
+                .filter((c) => !c.primary)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.summary}
+                  </option>
+                ))}
+            </select>
+          )}
           <div className="time-row">
             <input
               className="text-input"
