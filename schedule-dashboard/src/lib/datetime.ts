@@ -13,6 +13,12 @@ export function formatDateJa(d: Date): string {
   })`;
 }
 
+/** Date を <input type="time"> 用の "HH:MM" 文字列に変換する。 */
+export function toTimeInput(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export function isSameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&

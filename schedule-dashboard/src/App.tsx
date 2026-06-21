@@ -2,9 +2,11 @@ import { NavLink, Route, Routes } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Schedule from "./pages/Schedule";
 import { useGoogle } from "./context/GoogleContext";
+import { useTheme } from "./hooks/useTheme";
 
 export default function App() {
   const { ready, signedIn, signIn, signOut, error } = useGoogle();
+  const { theme, toggle } = useTheme();
 
   return (
     <div className="app">
@@ -17,6 +19,14 @@ export default function App() {
           <NavLink to="/schedule">スケジュール帳</NavLink>
         </nav>
         <div className="auth">
+          <button
+            className="icon-btn"
+            aria-label="テーマ切替"
+            title="テーマ切替"
+            onClick={toggle}
+          >
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
           {!ready ? (
             <span className="muted small">読み込み中…</span>
           ) : signedIn ? (

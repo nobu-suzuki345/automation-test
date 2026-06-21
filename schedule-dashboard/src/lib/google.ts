@@ -244,6 +244,30 @@ export async function createEvent(
   return mapEvent(resp.result);
 }
 
+export interface UpdateEventInput {
+  id: string;
+  summary: string;
+  start: Date;
+  end: Date;
+  description?: string;
+}
+
+export async function updateEvent(
+  input: UpdateEventInput
+): Promise<CalendarEvent> {
+  const resp = await gapi.client.calendar.events.patch({
+    calendarId: "primary",
+    eventId: input.id,
+    resource: {
+      summary: input.summary,
+      description: input.description || undefined,
+      start: { dateTime: input.start.toISOString() },
+      end: { dateTime: input.end.toISOString() },
+    },
+  });
+  return mapEvent(resp.result);
+}
+
 export async function deleteEvent(eventId: string): Promise<void> {
   await gapi.client.calendar.events.delete({
     calendarId: "primary",

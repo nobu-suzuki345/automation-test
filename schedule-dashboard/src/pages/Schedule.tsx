@@ -4,9 +4,10 @@ import {
   createEvent,
   deleteEvent,
   listEvents,
+  updateEvent,
   type CalendarEvent,
 } from "../lib/google";
-import { formatTime, isSameDay, WEEKDAYS_JA } from "../lib/datetime";
+import { formatTime, isSameDay, toTimeInput, WEEKDAYS_JA } from "../lib/datetime";
 import JoinButtons from "../components/JoinButtons";
 
 type View = "month" | "week";
@@ -48,12 +49,29 @@ export default function Schedule() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 追加フォーム
+  // 追加 / 編集フォーム（editingId が null なら新規追加）
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [summary, setSummary] = useState("");
   const [startTime, setStartTime] = useState("10:00");
   const [endTime, setEndTime] = useState("11:00");
   const [addMeet, setAddMeet] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const resetForm = () => {
+    setEditingId(null);
+    setSummary("");
+    setStartTime("10:00");
+    setEndTime("11:00");
+    setAddMeet(false);
+  };
+
+  const startEdit = (ev: CalendarEvent) => {
+    setEditingId(ev.id);
+    setSummary(ev.summary);
+    setStartTime(toTimeInput(ev.start));
+    setEndTime(toTimeInput(ev.end));
+    setAddMeet(false);
+  };
 
   const monthDays = useMemo(() => buildCalendarDays(month), [month]);
   const weekDays = useMemo(() => buildWeekDays(selected), [selected]);
@@ -119,7 +137,7 @@ export default function Schedule() {
     setMonth(startOfMonth(day));
   };
 
-  const handleAdd = async () => {
+  const handleSubmit = async () => {
     if (!summary.trim()) return;
     const [sh, sm] = startTime.split(":").map(Number);
     const [eh, em] = endTime.split(":").map(Number);
@@ -131,12 +149,18 @@ export default function Schedule() {
     setSaving(true);
     setError(null);
     try {
-      await createEvent({ summary: summary.trim(), start, end, addMeet });
-      setSummary("");
-      setAddMeet(false);
+      if (editingId) {
+        await updateEvent({ id: editingId, summary: summary.trim(), start, end });
+      } else {
+        await createEvent({ summary: summary.trim(), start, end, addMeet });
+      }
+      resetForm();
       loadMonth();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "予定の作成に失敗しました");
+      const fallback = editingId
+        ? "予定の更新に失敗しました"
+        : "予定の作成に失敗しました";
+      setError(e instanceof Error ? e.message : fallback);
     } finally {
       setSaving(false);
     }
@@ -303,6 +327,13 @@ export default function Schedule() {
               </div>
               <button
                 className="icon-btn"
+                aria-label="編集"
+                onClick={() => startEdit(ev)}
+              >
+                ✎
+              </button>
+              <button
+                className="icon-btn"
                 aria-label="削除"
                 onClick={() => handleDelete(ev.id)}
               >
@@ -313,7 +344,9 @@ export default function Schedule() {
         </ul>
 
         <div className="add-form">
-          <div className="add-form-title">＋ 予定を追加</div>
+          <div className="add-form-title">
+            {editingId ? "✎ 予定を編集" : "＋ 予定を追加"}
+          </div>
           <input
             className="text-input"
             placeholder="タイトル"
@@ -335,17 +368,26 @@ export default function Schedule() {
               onChange={(e) => setEndTime(e.target.value)}
             />
           </div>
-          <label className="checkbox-row">
-            <input
-              type="checkbox"
-              checked={addMeet}
-              onChange={(e) => setAddMeet(e.target.checked)}
-            />
-            <span>Google Meet リンクを発行する</span>
-          </label>
-          <button className="btn" disabled={saving} onClick={handleAdd}>
-            {saving ? "保存中…" : "追加"}
-          </button>
+          {!editingId && (
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={addMeet}
+                onChange={(e) => setAddMeet(e.target.checked)}
+              />
+              <span>Google Meet リンクを発行する</span>
+            </label>
+          )}
+          <div className="form-actions">
+            <button className="btn" disabled={saving} onClick={handleSubmit}>
+              {saving ? "保存中…" : editingId ? "更新" : "追加"}
+            </button>
+            {editingId && (
+              <button className="btn ghost" disabled={saving} onClick={resetForm}>
+                キャンセル
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </div>
