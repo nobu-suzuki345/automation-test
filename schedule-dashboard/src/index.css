@@ -474,8 +474,137 @@ body {
   color: var(--muted);
 }
 
+/* ---- Dashboard customize ---- */
+.page-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.customize-panel {
+  margin-bottom: 16px;
+}
+
+.customize-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.customize-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.customize-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.reorder {
+  display: flex;
+  gap: 2px;
+}
+
+/* ---- View toggle ---- */
+.view-toggle {
+  display: flex;
+  margin-left: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.view-toggle button {
+  border: none;
+  background: #fff;
+  color: var(--muted);
+  padding: 5px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.view-toggle button.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* ---- Week view ---- */
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.week-col {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  min-height: 120px;
+  padding: 6px;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.week-col:hover {
+  background: var(--accent-weak);
+}
+
+.week-col.selected {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.week-col-head {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.week-col.today .week-col-head {
+  color: var(--accent);
+}
+
+.week-col-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.week-chip {
+  background: var(--accent-weak);
+  border-radius: 6px;
+  padding: 2px 6px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.week-chip-time {
+  color: var(--accent);
+  margin-right: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 760px) {
+  .week-grid {
+    grid-template-columns: 1fr;
+  }
+  .week-col {
+    min-height: auto;
+  }
   .schedule {
     grid-template-columns: 1fr;
   }

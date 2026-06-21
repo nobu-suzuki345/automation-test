@@ -9,6 +9,8 @@ import {
 import { formatTime, isSameDay, WEEKDAYS_JA } from "../lib/datetime";
 import JoinButtons from "../components/JoinButtons";
 
+type View = "month" | "week";
+
 function startOfMonth(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), 1);
 }
@@ -17,20 +19,29 @@ function addMonths(d: Date, n: number): Date {
   return new Date(d.getFullYear(), d.getMonth() + n, 1);
 }
 
+function addDays(d: Date, n: number): Date {
+  const r = new Date(d);
+  r.setDate(r.getDate() + n);
+  return r;
+}
+
 /** 月表示用に 6 週 × 7 日 = 42 セルの日付配列を作る。 */
 function buildCalendarDays(month: Date): Date[] {
   const first = startOfMonth(month);
   const gridStart = new Date(first);
   gridStart.setDate(first.getDate() - first.getDay());
-  return Array.from({ length: 42 }, (_, i) => {
-    const d = new Date(gridStart);
-    d.setDate(gridStart.getDate() + i);
-    return d;
-  });
+  return Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
+}
+
+/** day を含む週（日曜始まり）の 7 日分。 */
+function buildWeekDays(day: Date): Date[] {
+  const start = addDays(day, -day.getDay());
+  return Array.from({ length: 7 }, (_, i) => addDays(start, i));
 }
 
 export default function Schedule() {
   const { ready, signedIn, signIn } = useGoogle();
+  const [view, setView] = useState<View>("month");
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [selected, setSelected] = useState(() => new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -44,8 +55,10 @@ export default function Schedule() {
   const [addMeet, setAddMeet] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const days = useMemo(() => buildCalendarDays(month), [month]);
+  const monthDays = useMemo(() => buildCalendarDays(month), [month]);
+  const weekDays = useMemo(() => buildWeekDays(selected), [selected]);
 
+  // 月グリッド（6週分）を一括取得しておけば、その月内の週ビューもまかなえる
   const loadMonth = useCallback(() => {
     if (!signedIn) {
       setEvents([]);
@@ -72,13 +85,39 @@ export default function Schedule() {
   }, [loadMonth]);
 
   const eventsOf = useCallback(
-    (day: Date) => events.filter((e) => isSameDay(e.start, day)),
+    (day: Date) =>
+      events
+        .filter((e) => isSameDay(e.start, day))
+        .sort((a, b) => a.start.getTime() - b.start.getTime()),
     [events]
   );
 
-  const selectedEvents = eventsOf(selected).sort(
-    (a, b) => a.start.getTime() - b.start.getTime()
-  );
+  const selectedEvents = eventsOf(selected);
+
+  const goPrev = () => {
+    if (view === "month") {
+      setMonth(addMonths(month, -1));
+    } else {
+      const d = addDays(selected, -7);
+      setSelected(d);
+      setMonth(startOfMonth(d));
+    }
+  };
+
+  const goNext = () => {
+    if (view === "month") {
+      setMonth(addMonths(month, 1));
+    } else {
+      const d = addDays(selected, 7);
+      setSelected(d);
+      setMonth(startOfMonth(d));
+    }
+  };
+
+  const pickDay = (day: Date) => {
+    setSelected(new Date(day));
+    setMonth(startOfMonth(day));
+  };
 
   const handleAdd = async () => {
     if (!summary.trim()) return;
@@ -129,62 +168,122 @@ export default function Schedule() {
     );
   }
 
+  const headerTitle =
+    view === "month"
+      ? `${month.getFullYear()}年 ${month.getMonth() + 1}月`
+      : `${weekDays[0].getMonth() + 1}/${weekDays[0].getDate()} 〜 ${
+          weekDays[6].getMonth() + 1
+        }/${weekDays[6].getDate()}`;
+
   return (
     <div className="schedule">
       <div className="calendar card">
         <div className="calendar-head">
-          <button className="icon-btn" onClick={() => setMonth(addMonths(month, -1))}>
+          <button className="icon-btn" onClick={goPrev}>
             ‹
           </button>
-          <div className="calendar-title">
-            {month.getFullYear()}年 {month.getMonth() + 1}月
-          </div>
-          <button className="icon-btn" onClick={() => setMonth(addMonths(month, 1))}>
+          <div className="calendar-title">{headerTitle}</div>
+          <button className="icon-btn" onClick={goNext}>
             ›
           </button>
+          <div className="view-toggle">
+            <button
+              className={view === "month" ? "active" : ""}
+              onClick={() => setView("month")}
+            >
+              月
+            </button>
+            <button
+              className={view === "week" ? "active" : ""}
+              onClick={() => setView("week")}
+            >
+              週
+            </button>
+          </div>
         </div>
 
-        <div className="weekday-row">
-          {WEEKDAYS_JA.map((w) => (
-            <div key={w} className="weekday">
-              {w}
+        {view === "month" ? (
+          <>
+            <div className="weekday-row">
+              {WEEKDAYS_JA.map((w) => (
+                <div key={w} className="weekday">
+                  {w}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-
-        <div className="day-grid">
-          {days.map((day) => {
-            const inMonth = day.getMonth() === month.getMonth();
-            const dayEvents = eventsOf(day);
-            const classes = [
-              "day-cell",
-              inMonth ? "" : "outside",
-              isSameDay(day, selected) ? "selected" : "",
-              isSameDay(day, today) ? "today" : "",
-            ]
-              .filter(Boolean)
-              .join(" ");
-            return (
-              <button
-                key={day.toISOString()}
-                className={classes}
-                onClick={() => setSelected(new Date(day))}
-              >
-                <span className="day-num">{day.getDate()}</span>
-                {dayEvents.length > 0 && (
-                  <span className="day-dot">{dayEvents.length}</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+            <div className="day-grid">
+              {monthDays.map((day) => {
+                const inMonth = day.getMonth() === month.getMonth();
+                const dayEvents = eventsOf(day);
+                const classes = [
+                  "day-cell",
+                  inMonth ? "" : "outside",
+                  isSameDay(day, selected) ? "selected" : "",
+                  isSameDay(day, today) ? "today" : "",
+                ]
+                  .filter(Boolean)
+                  .join(" ");
+                return (
+                  <button
+                    key={day.toISOString()}
+                    className={classes}
+                    onClick={() => pickDay(day)}
+                  >
+                    <span className="day-num">{day.getDate()}</span>
+                    {dayEvents.length > 0 && (
+                      <span className="day-dot">{dayEvents.length}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          <div className="week-grid">
+            {weekDays.map((day) => {
+              const dayEvents = eventsOf(day);
+              const classes = [
+                "week-col",
+                isSameDay(day, selected) ? "selected" : "",
+                isSameDay(day, today) ? "today" : "",
+              ]
+                .filter(Boolean)
+                .join(" ");
+              return (
+                <button
+                  key={day.toISOString()}
+                  className={classes}
+                  onClick={() => setSelected(new Date(day))}
+                >
+                  <div className="week-col-head">
+                    {WEEKDAYS_JA[day.getDay()]} {day.getDate()}
+                  </div>
+                  <div className="week-col-body">
+                    {dayEvents.length === 0 ? (
+                      <span className="muted small">—</span>
+                    ) : (
+                      dayEvents.map((ev) => (
+                        <div key={ev.id} className="week-chip">
+                          <span className="week-chip-time">
+                            {ev.allDay ? "終日" : formatTime(ev.start)}
+                          </span>
+                          {ev.summary}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
         {loading && <div className="muted small">読み込み中…</div>}
       </div>
 
       <div className="day-detail card">
         <div className="card-title">
-          {month.getFullYear()}/{selected.getMonth() + 1}/{selected.getDate()} (
-          {WEEKDAYS_JA[selected.getDay()]})
+          {selected.getFullYear()}/{selected.getMonth() + 1}/
+          {selected.getDate()} ({WEEKDAYS_JA[selected.getDay()]})
         </div>
 
         {error && <div className="error small">{error}</div>}
