@@ -294,9 +294,32 @@ body {
   cursor: pointer;
 }
 
-.todo-item.done span {
+.todo-item.done .todo-text {
   text-decoration: line-through;
   color: var(--muted);
+}
+
+.todo-due-input {
+  margin-bottom: 12px;
+}
+
+.todo-due {
+  margin-left: 8px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: var(--accent-weak);
+  border-radius: 999px;
+  padding: 0 6px;
+}
+
+.todo-due.overdue {
+  color: #fff;
+  background: var(--danger);
+}
+
+.todo-actions {
+  display: flex;
+  gap: 2px;
 }
 
 /* ---- Memo ---- */
@@ -399,6 +422,14 @@ body {
   display: flex;
   gap: 12px;
   align-items: flex-start;
+}
+
+.event-color {
+  width: 4px;
+  align-self: stretch;
+  min-height: 20px;
+  border-radius: 2px;
+  flex-shrink: 0;
 }
 
 .event-time {
@@ -550,6 +581,26 @@ body {
 .form-actions {
   display: flex;
   gap: 8px;
+}
+
+.color-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.color-swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.color-swatch.selected {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px var(--card) inset;
 }
 
 .time-row {

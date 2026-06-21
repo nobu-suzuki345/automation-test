@@ -29,6 +29,7 @@ export interface CalendarEvent {
   meetLink?: string;
   zoomLink?: string;
   htmlLink?: string;
+  colorId?: string;
 }
 
 interface StoredToken {
@@ -184,6 +185,7 @@ function mapEvent(item: any): CalendarEvent {
     meetLink: meetLink ?? undefined,
     zoomLink: zoomLink ?? undefined,
     htmlLink: item.htmlLink,
+    colorId: item.colorId,
   };
 }
 
@@ -217,6 +219,7 @@ export interface CreateEventInput {
   end: Date;
   description?: string;
   addMeet?: boolean;
+  colorId?: string;
 }
 
 export async function createEvent(
@@ -225,6 +228,7 @@ export async function createEvent(
   const resource: any = {
     summary: input.summary,
     description: input.description || undefined,
+    colorId: input.colorId || undefined,
     start: { dateTime: input.start.toISOString() },
     end: { dateTime: input.end.toISOString() },
   };
@@ -250,6 +254,7 @@ export interface UpdateEventInput {
   start: Date;
   end: Date;
   description?: string;
+  colorId?: string;
 }
 
 export async function updateEvent(
@@ -261,6 +266,7 @@ export async function updateEvent(
     resource: {
       summary: input.summary,
       description: input.description || undefined,
+      colorId: input.colorId || undefined,
       start: { dateTime: input.start.toISOString() },
       end: { dateTime: input.end.toISOString() },
     },

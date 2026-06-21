@@ -8,6 +8,7 @@ import {
   type CalendarEvent,
 } from "../lib/google";
 import { formatTime, isSameDay, toTimeInput, WEEKDAYS_JA } from "../lib/datetime";
+import { colorHex, EVENT_COLORS } from "../lib/eventColors";
 import JoinButtons from "../components/JoinButtons";
 
 type View = "month" | "week";
@@ -55,6 +56,7 @@ export default function Schedule() {
   const [startTime, setStartTime] = useState("10:00");
   const [endTime, setEndTime] = useState("11:00");
   const [addMeet, setAddMeet] = useState(false);
+  const [colorId, setColorId] = useState("");
   const [saving, setSaving] = useState(false);
 
   const resetForm = () => {
@@ -63,6 +65,7 @@ export default function Schedule() {
     setStartTime("10:00");
     setEndTime("11:00");
     setAddMeet(false);
+    setColorId("");
   };
 
   const startEdit = (ev: CalendarEvent) => {
@@ -71,6 +74,7 @@ export default function Schedule() {
     setStartTime(toTimeInput(ev.start));
     setEndTime(toTimeInput(ev.end));
     setAddMeet(false);
+    setColorId(ev.colorId ?? "");
   };
 
   const monthDays = useMemo(() => buildCalendarDays(month), [month]);
@@ -150,9 +154,21 @@ export default function Schedule() {
     setError(null);
     try {
       if (editingId) {
-        await updateEvent({ id: editingId, summary: summary.trim(), start, end });
+        await updateEvent({
+          id: editingId,
+          summary: summary.trim(),
+          start,
+          end,
+          colorId,
+        });
       } else {
-        await createEvent({ summary: summary.trim(), start, end, addMeet });
+        await createEvent({
+          summary: summary.trim(),
+          start,
+          end,
+          addMeet,
+          colorId,
+        });
       }
       resetForm();
       loadMonth();
@@ -318,6 +334,10 @@ export default function Schedule() {
           )}
           {selectedEvents.map((ev) => (
             <li key={ev.id} className="event-row">
+              <span
+                className="event-color"
+                style={{ background: colorHex(ev.colorId) }}
+              />
               <div className="event-time">
                 {ev.allDay ? "終日" : formatTime(ev.start)}
               </div>
@@ -367,6 +387,28 @@ export default function Schedule() {
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
             />
+          </div>
+          <div className="color-row">
+            <button
+              type="button"
+              className={colorId === "" ? "color-swatch selected" : "color-swatch"}
+              style={{ background: colorHex("") }}
+              aria-label="既定の色"
+              onClick={() => setColorId("")}
+            />
+            {EVENT_COLORS.map((c) => (
+              <button
+                type="button"
+                key={c.id}
+                className={
+                  colorId === c.id ? "color-swatch selected" : "color-swatch"
+                }
+                style={{ background: c.hex }}
+                title={c.name}
+                aria-label={c.name}
+                onClick={() => setColorId(c.id)}
+              />
+            ))}
           </div>
           {!editingId && (
             <label className="checkbox-row">

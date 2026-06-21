@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useGoogle } from "../context/GoogleContext";
 import { listEvents, type CalendarEvent } from "../lib/google";
 import { formatTime, WEEKDAYS_JA } from "../lib/datetime";
+import { colorHex } from "../lib/eventColors";
 import JoinButtons from "../components/JoinButtons";
 
 const RANGE_DAYS = 7;
@@ -71,6 +72,10 @@ export default function UpcomingCard() {
         <ul className="events-list">
           {events.map((ev) => (
             <li key={ev.id} className="event-row">
+              <span
+                className="event-color"
+                style={{ background: colorHex(ev.colorId) }}
+              />
               <div className="up-when">
                 <div className="up-date">
                   {ev.start.getMonth() + 1}/{ev.start.getDate()}（
